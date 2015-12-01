@@ -29,18 +29,23 @@ class LecroyBinaryWaveform(object):
     # methods needs a define endianness, we can default to 0 and not
     # worry about being wrong because of the preceding argument.
 
+    # XXX The attribute names are important! Any attribute that is all
+    # caps and does not start with '_' is considered metadata and will
+    # be exported as part of the metadata property. This means it will
+    # also be written to file when saving as CSV
+
     self.COMM_ORDER = 0
     self.COMM_ORDER             = self.read_enum(at(34))
 
     self.TEMPLATE_NAME          = self.read_string(at(16))
     self.COMM_TYPE              = self.read_enum(at(32))
-    self.WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
-    self.USER_TEXT_SIZE         = self.read_long(at(40))
-    self.RES_DESC1_SIZE         = self.read_long(at(44))
-    self.TRIGTIME_ARRAY_SIZE    = self.read_long(at(48))
-    self.RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
-    self.RES_ARRAY1_SIZE        = self.read_long(at(56))
-    self.WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
+    self._WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
+    self._USER_TEXT_SIZE         = self.read_long(at(40))
+    self._RES_DESC1_SIZE         = self.read_long(at(44))
+    self._TRIGTIME_ARRAY_SIZE    = self.read_long(at(48))
+    self._RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
+    self._RES_ARRAY1_SIZE        = self.read_long(at(56))
+    self._WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
 
     self.INSTRUMENT_NAME        = self.read_string(at(76))
     self.INSTRUMENT_NUMBER      = self.read_long(at(92))
@@ -59,19 +64,19 @@ class LecroyBinaryWaveform(object):
     self.HORIZ_OFFSET           = self.read_double(at(180))
 
 
-    aWAVE_ARRAY_1               = at( self.WAVE_DESCRIPTOR_SIZE +
-                                      self.USER_TEXT_SIZE +
-                                      self.TRIGTIME_ARRAY_SIZE)
+    a_WAVE_ARRAY_1               = at( self._WAVE_DESCRIPTOR_SIZE +
+                                      self._USER_TEXT_SIZE +
+                                      self._TRIGTIME_ARRAY_SIZE)
 
-###    print 'WAVE_DESCRIPTOR_SIZE', self.WAVE_DESCRIPTOR_SIZE
-###    print 'USER_TEXT_SIZE', self.USER_TEXT_SIZE
-###    print 'RES_DESC1_SIZE', self.RES_DESC1_SIZE
-###    print 'TRIGTIME_ARRAY_SIZE', self.TRIGTIME_ARRAY_SIZE
-###    print 'RIS_TIME_ARRAY_SIZE', self.RIS_TIME_ARRAY_SIZE
-###    print 'RES_ARRAY1_SIZE', self.RES_ARRAY1_SIZE
-###    print 'WAVE_ARRAY_1_SIZE', self.WAVE_ARRAY_1_SIZE
+###    print '_WAVE_DESCRIPTOR_SIZE', self._WAVE_DESCRIPTOR_SIZE
+###    print '_USER_TEXT_SIZE', self._USER_TEXT_SIZE
+###    print '_RES_DESC1_SIZE', self._RES_DESC1_SIZE
+###    print '_TRIGTIME_ARRAY_SIZE', self._TRIGTIME_ARRAY_SIZE
+###    print '_RIS_TIME_ARRAY_SIZE', self._RIS_TIME_ARRAY_SIZE
+###    print '_RES_ARRAY1_SIZE', self._RES_ARRAY1_SIZE
+###    print '_WAVE_ARRAY_1_SIZE', self._WAVE_ARRAY_1_SIZE
 
-    self.WAVE_ARRAY_1 = self.read_wave_array(aWAVE_ARRAY_1)
+    self._WAVE_ARRAY_1 = self.read_wave_array(a_WAVE_ARRAY_1)
 
   @property
   def sampling_frequency(self):
@@ -86,12 +91,12 @@ class LecroyBinaryWaveform(object):
     return self.COMM_ORDER == 0
 
   @property
-  def WAVE_ARRAY_1_time(self):
+  def _WAVE_ARRAY_1_time(self):
     """
     A calculated array of when each sample in wave_form_1 was measured,
     based on HORIZ_OFFSET and HORIZ_INTERVAL.
     """
-    tvec = np.arange(0, self.WAVE_ARRAY_1.size)
+    tvec = np.arange(0, self._WAVE_ARRAY_1.size)
     return tvec * self.HORIZ_INTERVAL + self.HORIZ_OFFSET
 
   @property
@@ -100,21 +105,9 @@ class LecroyBinaryWaveform(object):
     Returns a dictionary of metadata information.
     """
     metadict = dict()
-    metanames = ['TEMPLATE_NAME',
-                 'COMM_ORDER',
-                 'COMM_TYPE',
-                 'INSTRUMENT_NAME',
-                 'INSTRUMENT_NUMBER',
-                 'TRACE_LABEL',
-                 'TRIG_TIME',
-                 'VERTICAL_GAIN',
-                 'VERTICAL_OFFSET',
-                 'HORIZ_INTERVAL',
-                 'HORIZ_OFFSET',
-                 'PROCESSING_DONE']
-
-    for name in metanames:
-      metadict[name] = getattr(self, name)
+    for name, value in vars(self).items():
+      if not name.startswith('_') and name.isupper():
+        metadict[name] = getattr(self, name)
 
     return metadict
 
@@ -128,8 +121,8 @@ class LecroyBinaryWaveform(object):
 
     All headers will be prepended with '#'
     """
-    x = np.reshape(self.WAVE_ARRAY_1_time, (-1, 1))
-    y = np.reshape(self.WAVE_ARRAY_1, (-1, 1))
+    x = np.reshape(self._WAVE_ARRAY_1_time, (-1, 1))
+    y = np.reshape(self._WAVE_ARRAY_1, (-1, 1))
 
     mat = np.column_stack((x,y))
 
@@ -231,8 +224,8 @@ class LecroyBinaryWaveform(object):
 
   def read_wave_array(self, addr):
     self.fh.seek(addr)
-    s = self.fh.read(self.WAVE_ARRAY_1_SIZE)
-    nsamples = self.WAVE_ARRAY_1_SIZE
+    s = self.fh.read(self._WAVE_ARRAY_1_SIZE)
+    nsamples = self._WAVE_ARRAY_1_SIZE
     if self.COMM_TYPE == 0:
       fmt = self._make_fmt('i1')
     else:

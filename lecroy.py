@@ -24,69 +24,71 @@ class LecroyBinaryWaveform(object):
   def __init__(self, inputfilename):
     super(LecroyBinaryWaveform, self).__init__()
 
-    self.fh = open(inputfilename)
-    header = self.fh.read(50)
-    self.aWAVEDESC = str.find(header, 'WAVEDESC')
+    with open(inputfilename, 'rb') as fh:
+      self.fh = fh
+      header = self.fh.read(50)
+      self.aWAVEDESC = str.find(header, 'WAVEDESC')
 
-    def at(offset):
-      return self.aWAVEDESC + offset
+      def at(offset):
+        return self.aWAVEDESC + offset
 
-    # the lecroy format says COMM_ORDER is an enum, which is a 16 bit
-    # value and therefore subject to endianness. However COMM_ORDER
-    # dictates the endianness! However, since the possible values are
-    # either 0, which is the same in either endianness, or 0x1 or 0x7000
-    # in big/small endianness, we can just check for 0. Since all read_*
-    # methods needs a define endianness, we can default to 0 and not
-    # worry about being wrong because of the preceding argument.
+      # the lecroy format says COMM_ORDER is an enum, which is a 16 bit
+      # value and therefore subject to endianness. However COMM_ORDER
+      # dictates the endianness! However, since the possible values are
+      # either 0, which is the same in either endianness, or 0x1 or 0x7000
+      # in big/small endianness, we can just check for 0. Since all read_*
+      # methods needs a define endianness, we can default to 0 and not
+      # worry about being wrong because of the preceding argument.
 
-    # XXX The attribute names are important! Any attribute that is all
-    # caps and does not start with '_' is considered metadata and will
-    # be exported as part of the metadata property. This means it will
-    # also be written to file when saving as CSV
+      # XXX The attribute names are important! Any attribute that is all
+      # caps and does not start with '_' is considered metadata and will
+      # be exported as part of the metadata property. This means it will
+      # also be written to file when saving as CSV
 
-    self.COMM_ORDER = 0
-    self.COMM_ORDER             = self.read_enum(at(34))
+      self.COMM_ORDER = 0
+      self.COMM_ORDER             = self.read_enum(at(34))
 
-    self.TEMPLATE_NAME          = self.read_string(at(16))
-    self.COMM_TYPE              = self.read_enum(at(32))
-    self._WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
-    self._USER_TEXT_SIZE         = self.read_long(at(40))
-    self._RES_DESC1_SIZE         = self.read_long(at(44))
-    self._TRIGTIME_ARRAY_SIZE    = self.read_long(at(48))
-    self._RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
-    self._RES_ARRAY1_SIZE        = self.read_long(at(56))
-    self._WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
+      self.TEMPLATE_NAME          = self.read_string(at(16))
+      self.COMM_TYPE              = self.read_enum(at(32))
+      self._WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
+      self._USER_TEXT_SIZE         = self.read_long(at(40))
+      self._RES_DESC1_SIZE         = self.read_long(at(44))
+      self._TRIGTIME_ARRAY_SIZE    = self.read_long(at(48))
+      self._RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
+      self._RES_ARRAY1_SIZE        = self.read_long(at(56))
+      self._WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
 
-    self.INSTRUMENT_NAME        = self.read_string(at(76))
-    self.INSTRUMENT_NUMBER      = self.read_long(at(92))
+      self.INSTRUMENT_NAME        = self.read_string(at(76))
+      self.INSTRUMENT_NUMBER      = self.read_long(at(92))
 
-    self.TRACE_LABEL            = self.read_string(at(96))
+      self.TRACE_LABEL            = self.read_string(at(96))
 
-    self.TRIG_TIME              = self.read_timestamp(at(296))
+      self.TRIG_TIME              = self.read_timestamp(at(296))
 
-    self.RECORD_TYPE            = self.read_record_type(at(316))
-    self.PROCESSING_DONE        = self.read_processing_done(at(318))
+      self.RECORD_TYPE            = self.read_record_type(at(316))
+      self.PROCESSING_DONE        = self.read_processing_done(at(318))
 
-    self.VERTICAL_GAIN          = self.read_float(at(156))
-    self.VERTICAL_OFFSET        = self.read_float(at(160))
+      self.VERTICAL_GAIN          = self.read_float(at(156))
+      self.VERTICAL_OFFSET        = self.read_float(at(160))
 
-    self.HORIZ_INTERVAL         = self.read_float(at(176))
-    self.HORIZ_OFFSET           = self.read_double(at(180))
+      self.HORIZ_INTERVAL         = self.read_float(at(176))
+      self.HORIZ_OFFSET           = self.read_double(at(180))
 
 
-    a_WAVE_ARRAY_1               = at( self._WAVE_DESCRIPTOR_SIZE +
-                                      self._USER_TEXT_SIZE +
-                                      self._TRIGTIME_ARRAY_SIZE)
+      a_WAVE_ARRAY_1               = at( self._WAVE_DESCRIPTOR_SIZE +
+                                        self._USER_TEXT_SIZE +
+                                        self._TRIGTIME_ARRAY_SIZE)
 
-###    print '_WAVE_DESCRIPTOR_SIZE', self._WAVE_DESCRIPTOR_SIZE
-###    print '_USER_TEXT_SIZE', self._USER_TEXT_SIZE
-###    print '_RES_DESC1_SIZE', self._RES_DESC1_SIZE
-###    print '_TRIGTIME_ARRAY_SIZE', self._TRIGTIME_ARRAY_SIZE
-###    print '_RIS_TIME_ARRAY_SIZE', self._RIS_TIME_ARRAY_SIZE
-###    print '_RES_ARRAY1_SIZE', self._RES_ARRAY1_SIZE
-###    print '_WAVE_ARRAY_1_SIZE', self._WAVE_ARRAY_1_SIZE
+###      print '_WAVE_DESCRIPTOR_SIZE', self._WAVE_DESCRIPTOR_SIZE
+###      print '_USER_TEXT_SIZE', self._USER_TEXT_SIZE
+###      print '_RES_DESC1_SIZE', self._RES_DESC1_SIZE
+###      print '_TRIGTIME_ARRAY_SIZE', self._TRIGTIME_ARRAY_SIZE
+###      print '_RIS_TIME_ARRAY_SIZE', self._RIS_TIME_ARRAY_SIZE
+###      print '_RES_ARRAY1_SIZE', self._RES_ARRAY1_SIZE
+###      print '_WAVE_ARRAY_1_SIZE', self._WAVE_ARRAY_1_SIZE
 
-    self._WAVE_ARRAY_1 = self.read_wave_array(a_WAVE_ARRAY_1)
+      self._WAVE_ARRAY_1 = self.read_wave_array(a_WAVE_ARRAY_1)
+    self.fh = None
 
   @property
   def sampling_frequency(self):
@@ -135,8 +137,8 @@ class LecroyBinaryWaveform(object):
 
     All headers will be prepended with '#'
     """
-    x = np.reshape(self._WAVE_ARRAY_1_time, (-1, 1))
-    y = np.reshape(self._WAVE_ARRAY_1, (-1, 1))
+    x = np.reshape(self.WAVE_ARRAY_1_time, (-1, 1))
+    y = np.reshape(self.WAVE_ARRAY_1, (-1, 1))
 
     mat = np.column_stack((x,y))
 

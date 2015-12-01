@@ -45,18 +45,18 @@ class LecroyBinaryWaveform(object):
       # be exported as part of the metadata property. This means it will
       # also be written to file when saving as CSV
 
-      self.COMM_ORDER = 0
+      self.COMM_ORDER             = 0
       self.COMM_ORDER             = self.read_enum(at(34))
 
       self.TEMPLATE_NAME          = self.read_string(at(16))
       self.COMM_TYPE              = self.read_enum(at(32))
-      self._WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
-      self._USER_TEXT_SIZE         = self.read_long(at(40))
-      self._RES_DESC1_SIZE         = self.read_long(at(44))
-      self._TRIGTIME_ARRAY_SIZE    = self.read_long(at(48))
-      self._RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
-      self._RES_ARRAY1_SIZE        = self.read_long(at(56))
-      self._WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
+      self._WAVE_DESCRIPTOR_SIZE  = self.read_long(at(36))
+      self._USER_TEXT_SIZE        = self.read_long(at(40))
+      self._RES_DESC1_SIZE        = self.read_long(at(44))
+      self._TRIGTIME_ARRAY_SIZE   = self.read_long(at(48))
+      self._RIS_TIME_ARRAY_SIZE   = self.read_long(at(52))
+      self._RES_ARRAY1_SIZE       = self.read_long(at(56))
+      self._WAVE_ARRAY_1_SIZE     = self.read_long(at(60))
 
       self.INSTRUMENT_NAME        = self.read_string(at(76))
       self.INSTRUMENT_NUMBER      = self.read_long(at(92))
@@ -75,9 +75,9 @@ class LecroyBinaryWaveform(object):
       self.HORIZ_OFFSET           = self.read_double(at(180))
 
 
-      a_WAVE_ARRAY_1               = at( self._WAVE_DESCRIPTOR_SIZE +
-                                        self._USER_TEXT_SIZE +
-                                        self._TRIGTIME_ARRAY_SIZE)
+      a_WAVE_ARRAY_1             = at(self._WAVE_DESCRIPTOR_SIZE +
+                                      self._USER_TEXT_SIZE +
+                                      self._TRIGTIME_ARRAY_SIZE)
 
 ###      print '_WAVE_DESCRIPTOR_SIZE', self._WAVE_DESCRIPTOR_SIZE
 ###      print '_USER_TEXT_SIZE', self._USER_TEXT_SIZE

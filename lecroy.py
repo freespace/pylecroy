@@ -27,7 +27,7 @@ class LecroyBinaryWaveform(object):
     # either 0, which is the same in either endianness, or 0x1 or 0x7000
     # in big/small endianness, we can just check for 0. Since all read_*
     # methods needs a define endianness, we can default to 0 and not
-    # worry about being wrong because of thep preceding argument.
+    # worry about being wrong because of the preceding argument.
 
     self.COMM_ORDER = 0
     self.COMM_ORDER             = self.read_enum(at(34))
@@ -69,7 +69,7 @@ class LecroyBinaryWaveform(object):
 
   @property
   def LOFIRST(self):
-    return self.COMM_ORDER == 1
+    return not self.HIFIRST
 
   @property
   def HIFIRST(self):

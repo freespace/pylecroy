@@ -32,7 +32,7 @@ class LecroyBinaryWaveform(object):
     self.COMM_ORDER = 0
     self.COMM_ORDER             = self.read_enum(at(34))
 
-    self.TEMPLATE_NAME          = self.read_string(at(16), 16)
+    self.TEMPLATE_NAME          = self.read_string(at(16))
     self.COMM_TYPE              = self.read_enum(at(32))
     self.WAVE_DESCRIPTOR_SIZE   = self.read_long(at(36))
     self.USER_TEXT_SIZE         = self.read_long(at(40))
@@ -41,6 +41,16 @@ class LecroyBinaryWaveform(object):
     self.RIS_TIME_ARRAY_SIZE    = self.read_long(at(52))
     self.RES_ARRAY1_SIZE        = self.read_long(at(56))
     self.WAVE_ARRAY_1_SIZE      = self.read_long(at(60))
+
+    self.INSTRUMENT_NAME        = self.read_string(at(76))
+    self.INSTRUMENT_NUMBER      = self.read_long(at(92))
+
+    self.TRACE_LABEL            = self.read_string(at(96))
+
+    self.TRIG_TIME              = self.read_timestamp(at(296))
+
+    self.RECORD_TYPE            = self.read_record_type(at(316))
+    self.PROCESSING_DONE        = self.read_processing_done(at(318))
 
     self.VERTICAL_GAIN          = self.read_float(at(156))
     self.VERTICAL_OFFSET        = self.read_float(at(160))
@@ -84,12 +94,57 @@ class LecroyBinaryWaveform(object):
     tvec = np.arange(0, self.WAVE_ARRAY_1.size)
     return tvec * self.HORIZ_INTERVAL + self.HORIZ_OFFSET
 
+  @property
+  def metadata(self):
+    """
+    Returns a dictionary of metadata information.
+    """
+    metadict = dict()
+    metanames = ['TEMPLATE_NAME',
+                 'COMM_ORDER',
+                 'COMM_TYPE',
+                 'INSTRUMENT_NAME',
+                 'INSTRUMENT_NUMBER',
+                 'TRACE_LABEL',
+                 'TRIG_TIME',
+                 'VERTICAL_GAIN',
+                 'VERTICAL_OFFSET',
+                 'HORIZ_INTERVAL',
+                 'HORIZ_OFFSET',
+                 'PROCESSING_DONE']
+
+    for name in metanames:
+      metadict[name] = getattr(self, name)
+
+    return metadict
+
   def savecsv(self, csvfname):
+    """
+    Saves the binary waveform as CSV, with metadata as headers.
+
+    The header line will contain the string
+
+      "LECROY BINARY WAVEFORM EXPORT"
+
+    All headers will be prepended with '#'
+    """
     x = np.reshape(self.WAVE_ARRAY_1_time, (-1, 1))
     y = np.reshape(self.WAVE_ARRAY_1, (-1, 1))
 
     mat = np.column_stack((x,y))
-    np.savetxt(csvfname, mat, delimiter=',')
+
+    metadata = self.metadata
+    jmeta = dict()
+    for name, value in metadata.items():
+      jmeta[name] = str(value)
+
+    jmeta['EXPORTER'] = 'LECROY.PY'
+    jmeta['AUTHOR'] = '@freespace'
+
+    import json
+    header = json.dumps(jmeta, sort_keys=True, indent=1)
+
+    np.savetxt(csvfname, mat, delimiter=',', header=header)
 
   def _make_fmt(self, fmt):
     if self.HIFIRST:
@@ -106,6 +161,9 @@ class LecroyBinaryWaveform(object):
   def read_byte(self, addr):
     return self._read(addr, 1, 'u1')
 
+  def read_word(self, addr):
+    return self._read(addr, 2, 'i2')
+
   def read_enum(self, addr):
     return self._read(addr, 2, 'u2')
 
@@ -118,8 +176,58 @@ class LecroyBinaryWaveform(object):
   def read_double(self, addr):
     return self._read(addr, 8, 'f8')
 
-  def read_string(self, addr, length):
+  def read_string(self, addr, length=16):
     return self._read(addr, length, 'S%d'%(length))
+
+  def read_timestamp(self, addr):
+    second  = self.read_double(addr)
+    addr += 8 # double is 64 bits = 8 bytes
+
+    minute  = self.read_byte(addr)
+    addr   += 1
+
+    hour    = self.read_byte(addr)
+    addr   += 1
+
+    day     = self.read_byte(addr)
+    addr   += 1
+
+    month   = self.read_byte(addr)
+    addr   += 1
+
+    year    = self.read_word(addr)
+    addr   += 2
+
+    from datetime import datetime
+    s = int(second)
+    ms = int((second - s) * 1000)
+    return datetime(year, month, day, hour, minute, s, ms)
+
+  def read_processing_done(self, addr):
+    v = self.read_enum(addr)
+    processsing_desc = ['no_processing',
+                        'fir_filter',
+                        'interpolated',
+                        'sparsed',
+                        'autoscaled',
+                        'no_result',
+                        'rolling',
+                        'cumulative']
+    return processsing_desc[v]
+
+  def read_record_type(self, addr):
+    v = self.read_enum(addr)
+    record_types = ['single_sweep',
+                    'interleaved',
+                    'histogram',
+                    'graph',
+                    'filter_coefficient',
+                    'complex',
+                    'extrema',
+                    'sequence_obsolete',
+                    'centered_RIS',
+                    'peak_detect']
+    return record_types[v]
 
   def read_wave_array(self, addr):
     self.fh.seek(addr)

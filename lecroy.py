@@ -1,5 +1,15 @@
 import numpy as np
 
+def read_timetrace(filename):
+  """
+  Returns the time trace from the given file. Returns the time and
+  voltage array, in that order.
+
+  Both arrays are 1-D.
+  """
+  bwf = LecroyBinaryWaveform(filename)
+  return bwf.WAVE_ARRAY_1_time, bwf.WAVE_ARRAY_1.ravel()
+
 class LecroyBinaryWaveform(object):
   """
   Implemented according to specs at:
@@ -91,7 +101,11 @@ class LecroyBinaryWaveform(object):
     return self.COMM_ORDER == 0
 
   @property
-  def _WAVE_ARRAY_1_time(self):
+  def WAVE_ARRAY_1(self):
+    return self._WAVE_ARRAY_1
+
+  @property
+  def WAVE_ARRAY_1_time(self):
     """
     A calculated array of when each sample in wave_form_1 was measured,
     based on HORIZ_OFFSET and HORIZ_INTERVAL.

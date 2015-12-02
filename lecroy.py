@@ -46,7 +46,14 @@ class LecroyBinaryWaveform(object):
       # also be written to file when saving as CSV
 
       self.COMM_ORDER             = 0
+
+      # We do a double read because after the first read, we will know the
+      # correct endianness based on the above argument, and therefore will
+      # have the correct value for COMM_ORDER. Otherwise 1 becomes 0x0100
+      # iff in little endian mode.
       self.COMM_ORDER             = self.read_enum(at(34))
+      self.COMM_ORDER             = self.read_enum(at(34))
+
 
       self.TEMPLATE_NAME          = self.read_string(at(16))
       self.COMM_TYPE              = self.read_enum(at(32))

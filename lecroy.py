@@ -134,6 +134,19 @@ class LecroyBinaryWaveform(object):
 
     return metadict
 
+  @property
+  def mat(self):
+    x = np.reshape(self.WAVE_ARRAY_1_time, (-1, 1))
+    y = np.reshape(self.WAVE_ARRAY_1, (-1, 1))
+
+    return np.column_stack((x,y))
+
+  @property
+  def comments(self):
+    keyvaluepairs=list()
+    for name, value in self.metadata.items():
+      keyvaluepairs.append('%s=%s'%(name, value))
+    return keyvaluepairs
   def savecsv(self, csvfname):
     """
     Saves the binary waveform as CSV, with metadata as headers.
@@ -144,11 +157,7 @@ class LecroyBinaryWaveform(object):
 
     All headers will be prepended with '#'
     """
-    x = np.reshape(self.WAVE_ARRAY_1_time, (-1, 1))
-    y = np.reshape(self.WAVE_ARRAY_1, (-1, 1))
-
-    mat = np.column_stack((x,y))
-
+    mat = self.mat
     metadata = self.metadata
     jmeta = dict()
     for name, value in metadata.items():

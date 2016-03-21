@@ -206,6 +206,7 @@ class LecroyBinaryWaveform(object):
 
   def read_timestamp(self, addr):
     second  = self.read_double(addr)
+    print second
     addr += 8 # double is 64 bits = 8 bytes
 
     minute  = self.read_byte(addr)
@@ -225,8 +226,8 @@ class LecroyBinaryWaveform(object):
 
     from datetime import datetime
     s = int(second)
-    ms = int((second - s) * 1000)
-    return datetime(year, month, day, hour, minute, s, ms)
+    us = int((second - s) * 1000000)
+    return datetime(year, month, day, hour, minute, s, us)
 
   def read_processing_done(self, addr):
     v = self.read_enum(addr)

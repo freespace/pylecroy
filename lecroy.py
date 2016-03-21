@@ -206,7 +206,6 @@ class LecroyBinaryWaveform(object):
 
   def read_timestamp(self, addr):
     second  = self.read_double(addr)
-    print second
     addr += 8 # double is 64 bits = 8 bytes
 
     minute  = self.read_byte(addr)

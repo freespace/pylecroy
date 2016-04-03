@@ -10,6 +10,23 @@ def read_timetrace(filename):
   bwf = LecroyBinaryWaveform(filename)
   return bwf.WAVE_ARRAY_1_time, bwf.WAVE_ARRAY_1.ravel()
 
+from contextlib import contextmanager
+@contextmanager
+def _open(filename, file_content):
+  if file_content is None:
+    fh = open(filename, 'rb')
+    yield fh
+    fh.close()
+  else:
+    try:
+      from cStringIO import StringIO
+    except:
+      from StringIO import StringIO
+
+    fh = StringIO(file_content)
+    yield fh
+    fh.close()
+
 class LecroyBinaryWaveform(object):
   """
   Implemented according to specs at:
@@ -21,10 +38,15 @@ class LecroyBinaryWaveform(object):
     http://qtwork.tudelft.nl/gitdata/users/guen/qtlabanalysis/analysis_modules/general/lecroy.py
   """
 
-  def __init__(self, inputfilename):
+  def __init__(self, inputfilename, file_content=None):
+    """
+    inputfilename: path to .trc file to read
+    file_content: if given, will be used in place of data on disk. Useful when
+                  loading data from zips
+    """
     super(LecroyBinaryWaveform, self).__init__()
 
-    with open(inputfilename, 'rb') as fh:
+    with _open(inputfilename, file_content) as fh:
       self.fh = fh
       header = self.fh.read(50)
       self.aWAVEDESC = str.find(header, 'WAVEDESC')

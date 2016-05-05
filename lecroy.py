@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import numpy as np
 
 def read_timetrace(filename):
@@ -294,11 +296,38 @@ class LecroyBinaryWaveform(object):
     # as per documentation, the actual value is gain * data - offset
     return self.VERTICAL_GAIN * data - self.VERTICAL_OFFSET
 
+def parse_commandline_arguments():
+  import argparse
+  parser = argparse.ArgumentParser(description='Converts 2D SIOS scans to TIFF images')
+  parser.add_argument('-csv',
+                      action='store_true',
+                      help='Converts inputs to csv. Outputs to the same filename with .csv appended')
+
+  parser.add_argument('-trigtime',
+                      action='store_true',
+                      help='Print the trigtime of inputs')
+
+  parser.add_argument('traces', nargs='+', help='Lecroy binary trc files')
+
+  cmdargs = vars(parser.parse_args())
+  return cmdargs
+
+def main(**cmdargs):
+  tracefiles = cmdargs['traces']
+  print_trigtime = cmdargs['trigtime']
+  convert_csv = cmdargs['csv']
+
+  for tf in tracefiles:
+    bwf = LecroyBinaryWaveform(tf)
+
+    if convert_csv:
+      bwf.savecsv(tf+'.csv')
+
+    if print_trigtime:
+      print bwf.TRIG_TIME
+
 if __name__ == '__main__':
   import sys
-  fname = sys.argv[1]
-  bwf = LecroyBinaryWaveform(fname)
+  cmdargs = parse_commandline_arguments()
+  sys.exit(main(**cmdargs))
 
-  print 'sampling freq=',bwf.sampling_frequency/1e6, 'MHz'
-
-  bwf.savecsv(sys.argv[2])

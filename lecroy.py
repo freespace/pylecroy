@@ -298,7 +298,7 @@ class LecroyBinaryWaveform(object):
 
 def parse_commandline_arguments():
   import argparse
-  parser = argparse.ArgumentParser(description='Converts 2D SIOS scans to TIFF images')
+  parser = argparse.ArgumentParser(description='Reads binary Lecroy DSO traces and converts them to CSV')
   parser.add_argument('-csv',
                       action='store_true',
                       help='Converts inputs to csv. Outputs to the same filename with .csv appended')

@@ -92,6 +92,8 @@ class LecroyBinaryWaveform(object):
       self.INSTRUMENT_NAME        = self.read_string(at(76))
       self.INSTRUMENT_NUMBER      = self.read_long(at(92))
 
+      self.WAVE_SOURCE            = self.read_enum(at(344))
+
       self.TRACE_LABEL            = self.read_string(at(96))
 
       self.TRIG_TIME              = self.read_timestamp(at(296))
@@ -102,9 +104,12 @@ class LecroyBinaryWaveform(object):
       self.VERTICAL_GAIN          = self.read_float(at(156))
       self.VERTICAL_OFFSET        = self.read_float(at(160))
 
+      self.FIXED_VERT_GAIN        = self.read_enum(at(332))
+
       self.HORIZ_INTERVAL         = self.read_float(at(176))
       self.HORIZ_OFFSET           = self.read_double(at(180))
 
+      self.VERT_COUPLING            = self.read_vert_coupling(at(326))
 
       a_WAVE_ARRAY_1             = at(self._WAVE_DESCRIPTOR_SIZE +
                                       self._USER_TEXT_SIZE +
@@ -251,6 +256,15 @@ class LecroyBinaryWaveform(object):
     s = int(second)
     us = int((second - s) * 1000000)
     return datetime(year, month, day, hour, minute, s, us)
+
+  def read_vert_coupling(self, addr):
+    v = self.read_enum(addr)
+    coupling_desc = ['DC_50_Ohms',
+                     'ground',
+                     'DC_1MOhm',
+                     'ground',
+                     'AC,_1MOhm']
+    return coupling_desc[v]
 
   def read_processing_done(self, addr):
     v = self.read_enum(addr)

@@ -51,7 +51,7 @@ class LecroyBinaryWaveform(object):
     with _open(inputfilename, file_content) as fh:
       self.fh = fh
       header = self.fh.read(50)
-      self.aWAVEDESC = str.find(header, 'WAVEDESC')
+      self.aWAVEDESC = header.decode('ascii').find('WAVEDESC')
 
       def at(offset):
         return self.aWAVEDESC + offset
@@ -303,7 +303,7 @@ class LecroyBinaryWaveform(object):
       # if each sample is a 2 bytes, then we have
       # half as many samples as there are bytes in the wave
       # array
-      nsamples /= 2
+      nsamples //= 2
     dt = np.dtype((fmt, nsamples))
     data = np.fromstring(s, dtype=dt)
 
@@ -338,10 +338,9 @@ def main(**cmdargs):
       bwf.savecsv(tf+'.csv')
 
     if print_trigtime:
-      print bwf.TRIG_TIME
+      print(bwf.TRIG_TIME)
 
 if __name__ == '__main__':
   import sys
   cmdargs = parse_commandline_arguments()
   sys.exit(main(**cmdargs))
-
